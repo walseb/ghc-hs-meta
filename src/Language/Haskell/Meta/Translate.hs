@@ -87,8 +87,14 @@ toLit (HsIntPrim _ i) = TH.IntPrimL i
 toLit (HsWordPrim _ i) = TH.WordPrimL i
 toLit (HsInt64Prim _ i) = TH.IntegerL i
 toLit (HsWord64Prim _ i) = TH.WordPrimL i
+#if MIN_VERSION_ghc(9,14,0)
+#else
 toLit (HsInteger _ i _) = TH.IntegerL i
+#endif
+#if MIN_VERSION_ghc(9,14,0)
+#else
 toLit (HsRat _ f _) = TH.FloatPrimL (fl_value f)
+#endif
 toLit (HsFloatPrim _ f) = TH.FloatPrimL (fl_value f)
 toLit (HsDoublePrim _ f) = TH.DoublePrimL (fl_value f)
 #if MIN_VERSION_ghc(9,12,0)
@@ -141,7 +147,8 @@ toExp _ (Expr.HsVar _ n) =
         then TH.ConE (toName n')
         else TH.VarE (toName n')
 
-#if MIN_VERSION_ghc(9,0,0)
+#if MIN_VERSION_ghc(9,14,0)
+#elif MIN_VERSION_ghc(9,0,0)
 toExp _ (Expr.HsUnboundVar _ n)              = TH.UnboundVarE (TH.mkName . occNameString . occName $ n)
 #else
 toExp _ (Expr.HsUnboundVar _ n)              = TH.UnboundVarE (TH.mkName . occNameString . Expr.unboundVarOcc $ n)
@@ -180,7 +187,9 @@ toExp d (Expr.NegApp _ e _)
   = TH.AppE (TH.VarE 'negate) (toExp d . unLoc $ e)
 
 -- NOTE: for lambda, there is only one match
-#if MIN_VERSION_ghc(9,12,0)
+#if MIN_VERSION_ghc(9,14,0)
+toExp d (Expr.HsLam _ LamSingle (Expr.MG _ (unLoc -> (map unLoc -> [Expr.Match _ _ (map unLoc . unLoc -> ps) (Expr.GRHSs _ (NonEmpty.toList -> [unLoc -> Expr.GRHS _ _ (unLoc -> e)]) _)]))))
+#elif MIN_VERSION_ghc(9,12,0)
 toExp d (Expr.HsLam _ LamSingle (Expr.MG _ (unLoc -> (map unLoc -> [Expr.Match _ _ (map unLoc . unLoc -> ps) (Expr.GRHSs _ [unLoc -> Expr.GRHS _ _ (unLoc -> e)] _)]))))
 #elif MIN_VERSION_ghc(9,10,0)
 toExp d (Expr.HsLam _ LamSingle (Expr.MG _ (unLoc -> (map unLoc -> [Expr.Match _ _ (map unLoc -> ps) (Expr.GRHSs _ [unLoc -> Expr.GRHS _ _ (unLoc -> e)] _)]))))

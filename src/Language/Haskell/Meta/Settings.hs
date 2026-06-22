@@ -49,6 +49,7 @@ import GHC.Data.FastString
 import GHC.Types.SrcLoc
 import GHC.Driver.Backpack.Syntax
 import GHC.Unit.Info
+import GHC.Unit.Types
 import GHC.Types.Name.Reader
 #else
 import StringBuffer
@@ -98,6 +99,10 @@ fakeSettings = Settings
   , sTargetPlatform=platform
   , sPlatformMisc=platformMisc
   , sToolSettings=toolSettings
+#if MIN_VERSION_ghc(9, 14, 0)
+  , sUnitSettings=unitSettings
+  , sRawSettings=[]
+#endif
   }
 #elif MIN_VERSION_ghc(8, 10, 0)
   { sGhcNameVersion=ghcNameVersion
@@ -122,6 +127,9 @@ fakeSettings = Settings
       }
     fileSettings = FileSettings {}
     platformMisc = PlatformMisc {}
+#if MIN_VERSION_ghc(9, 14, 0)
+    unitSettings = UnitSettings {unitSettings_baseUnitId=UnitId (fsLit "base")}
+#endif
     ghcNameVersion =
       GhcNameVersion{ghcNameVersion_programName="ghc"
                     ,ghcNameVersion_projectVersion=cProjectVersion
